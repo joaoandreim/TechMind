@@ -1,17 +1,16 @@
-'use client';
-
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import theme from '../theme'; 
 import './globals.css';
+import ClientLayout from './ClientLayout';
+
+export const metadata = {
+  title: 'Tech Mind',
+  description: 'Sistema de chamados',
+};
 
 export default function RootLayout({ children }) {
   return (
     <html lang="pt-br">
       <body>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          {children}
-        </ThemeProvider>
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );
