@@ -1,39 +1,29 @@
-'use client';
-
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import IconButton from '@mui/material/IconButton';
+import { AppBar, Toolbar, IconButton, Typography } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import Button from '@mui/material/Button';
-import useAuth from '../../hooks/useAuth';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 
-export default function Navbar() {
-  const { user, logout } = useAuth();
-
+export default function Navbar({ open, toggleDrawer }) {
   return (
-    <AppBar position="static" sx={{ bgcolor: 'primary.main' }}>
-      <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
-        {/* Botão de menu (útil no mobile) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <IconButton color="inherit" edge="start">
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" component="div">
-            TechMind
-          </Typography>
-        </div>
-
-        {/* Sessão de usuário */}
-        {user ? (
-          <Button color="inherit" onClick={logout}>
-            Sair
-          </Button>
-        ) : (
-          <Button color="inherit" href="/login">
-            Login
-          </Button>
-        )}
+    <AppBar 
+      position="sticky"
+      sx={{ 
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+      }}
+    >
+      <Toolbar>
+        <IconButton
+          color="inherit"
+          aria-label="toggle drawer"
+          onClick={toggleDrawer}
+          edge="start"
+          sx={{ marginRight: 2 }}
+        >
+          {open ? <ChevronLeftIcon /> : <MenuIcon />}
+        </IconButton>
+        
+        <Typography variant="h6" noWrap component="div">
+          Dashboard
+        </Typography>
       </Toolbar>
     </AppBar>
   );
