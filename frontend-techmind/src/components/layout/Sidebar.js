@@ -5,7 +5,7 @@ import ListItemText from '@mui/material/ListItemText';
 import Divider from '@mui/material/Divider';
 import Link from 'next/link';
 import Typography from '@mui/material/Typography';
-import DashboardIcon from '@mui/icons-material/Dashboard';
+import DataUsageOutlinedIcon from '@mui/icons-material/DataUsageOutlined';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import CategoryIcon from '@mui/icons-material/Category';
 import AddIcon from '@mui/icons-material/Add';
@@ -14,7 +14,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 
 export default function Sidebar({ open, drawerWidth, closedWidth }) { 
   const menuItems = [
-    { text: 'Dashboard', href: '/', icon: <DashboardIcon /> },
+    { text: 'Dashboard', href: '/', icon: <DataUsageOutlinedIcon /> },
     { text: 'Chamados', href: '/chamados', icon: <AssignmentIcon /> },
     { text: 'Novo Chamado', href: '/chamados/novo', icon: <AddIcon /> },
     { text: 'Categorias', href: '/categorias', icon: <CategoryIcon /> },
@@ -51,19 +51,27 @@ export default function Sidebar({ open, drawerWidth, closedWidth }) {
       <Divider />
       <List>
         {menuItems.map((item) => (
-          <Link key={item.text} href={item.href} passHref legacyBehavior>
-            <ListItemButton component="a">
-                <ListItemIcon sx={{ minWidth: 40, justifyContent: 'center' }}>
-                    {item.icon}
-                </ListItemIcon>
-              <ListItemText 
-                primary={item.text} 
-                sx={{ opacity: open ? 1 : 0, transition: 'opacity 0.3s ease-in-out' }} 
-              />
-            </ListItemButton>
-          </Link>
-        ))}
-      </List>
-    </Drawer>
-  );
+          <ListItemButton
+          key={item.text}
+          component={Link}
+          href={item.href}
+        >
+          <ListItemIcon sx={{ minWidth: 40, justifyContent: 'center' }}>
+              {item.icon}
+          </ListItemIcon>
+        <ListItemText 
+          primary={item.text} 
+          sx={{ 
+            opacity: open ? 1 : 0,
+            transition: 'opacity 0.3s ease-in-out',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }} 
+        />
+        </ListItemButton>
+      ))}
+    </List>
+  </Drawer>
+);
 }

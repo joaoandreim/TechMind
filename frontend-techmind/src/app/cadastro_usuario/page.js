@@ -1,21 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Button, CssBaseline, TextField, Paper, Box, Typography, 
-  CircularProgress, Link, Avatar, Container 
+  CircularProgress, Link, Avatar, Container, FormControl, InputLabel, Select, MenuItem, Alert 
 } from '@mui/material';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import useAuth from '../../hooks/authContext'; 
+import PersonAddOutlinedIcon from '@mui/icons-material/PersonAddOutlined';
+import useAuth from '../../hooks/authContext';
 import { useToast } from '../../components/Ui/ToastProvider';
+import api from '../../lib/api';
 import { TIPO_USUARIO } from '../../lib/constants';
 
 function Copyright(props) {
   return (
-    <Typography variant="body2" color="text.secondary" align="center" {...props}>
+    <Typography variant="body2" align="center" {...props} sx={{ color: 'rgba(255,255,255,0.8)', mt: 4 }}>
       {'Copyright © '}
-      <Link color="inherit" href="#">
+      <Link color="inherit" href="#" sx={{ fontWeight: 'bold', textDecoration: 'none' }}>
         TechMind
       </Link>{' '}
       {new Date().getFullYear()}
@@ -24,30 +25,43 @@ function Copyright(props) {
   );
 }
 
-export default function LoginPage() {
+export default function CadastroPage() {
+  const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [tipoUsuarioId, setTipoUsuarioId] = useState(TIPO_USUARIO.SOLICITANTE);
+  const [existeAdmin, setExisteAdmin] = useState(true); 
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  
   const router = useRouter();
   const { show } = useToast();
+
+  useEffect(() => {
+    api.get('/usuario/verificar/admin-existe')
+      .then((res) => {
+        setExisteAdmin(res.data); 
+        if (res.data) setTipoUsuarioId(TIPO_USUARIO.SOLICITANTE);
+        else setTipoUsuarioId(TIPO_USUARIO.ADMINISTRADOR);
+      })
+      .catch(() => setExisteAdmin(true)); 
+  }, []);
 
   const onSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const user = await login(email, senha);
-      show('Bem-vindo de volta!', 'success');
-      
-      const tipoId = user.tipoUsuario?.id || user.tipo_usuario_id;
-      switch (tipoId) {
-        case TIPO_USUARIO.SOLICITANTE: router.push('/solicitante/dashboard'); break;
-        case TIPO_USUARIO.ATENDENTE: router.push('/atendente/dashboard'); break;
-        case TIPO_USUARIO.ADMINISTRADOR: router.push('/admin/dashboard'); break;
-        default: router.push('/');
-      }
+      await api.post('/usuario', {
+        nome,
+        email,
+        senha,
+        tipoUsuario: { id: Number(tipoUsuarioId) } 
+      });
+
+      show('Conta criada com sucesso! Faça login.', 'success');
+      router.push('/login');
     } catch (err) {
-      show('Email ou senha incorretos.', 'error');
+      const msg = err.response?.data?.message || 'Erro ao realizar cadastro.';
+      show(msg, 'error');
     } finally {
       setLoading(false);
     }
@@ -62,14 +76,14 @@ export default function LoginPage() {
         alignItems: 'center', 
         justifyContent: 'center',
         background: 'linear-gradient(135deg, #00b65e 0%, #008f4c 100%)',
-        overflow: 'hidden'
+        py: 4
       }}
     >
       <CssBaseline />
       
       <Container component="main" maxWidth="xs">
         <Paper 
-          elevation={10}
+          elevation={10} 
           sx={{ 
             p: 4, 
             display: 'flex', 
@@ -80,26 +94,39 @@ export default function LoginPage() {
           }}
         >
           <Avatar sx={{ m: 1, bgcolor: '#e8f5e9', width: 64, height: 64 }}>
-            <LockOutlinedIcon sx={{ color: '#00b65e', fontSize: 32 }} />
+            <PersonAddOutlinedIcon sx={{ color: '#00b65e', fontSize: 32 }} />
           </Avatar>
           
           <Typography component="h1" variant="h4" sx={{ fontWeight: 800, color: '#00b65e', letterSpacing: '-1px' }}>
             TechMind.
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Gestão Inteligente de Chamados
+            Crie sua nova conta
           </Typography>
 
-          <Box component="form" onSubmit={onSubmit} noValidate sx={{ mt: 1, width: '100%' }}>
+          <Box component="form" noValidate onSubmit={onSubmit} sx={{ mt: 1, width: '100%' }}>
+            
             <TextField
               margin="normal"
               required
               fullWidth
-              id="email"
-              label="Email"
-              name="email"
-              autoComplete="email"
+              label="Nome Completo"
               autoFocus
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              disabled={loading}
+              sx={{
+                '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#00b65e' },
+                '& .MuiInputLabel-root.Mui-focused': { color: '#00b65e' }
+              }}
+            />
+            
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              label="Email"
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
@@ -108,15 +135,13 @@ export default function LoginPage() {
                 '& .MuiInputLabel-root.Mui-focused': { color: '#00b65e' }
               }}
             />
+            
             <TextField
               margin="normal"
               required
               fullWidth
-              name="password"
               label="Senha"
               type="password"
-              id="password"
-              autoComplete="current-password"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
               disabled={loading}
@@ -125,6 +150,26 @@ export default function LoginPage() {
                 '& .MuiInputLabel-root.Mui-focused': { color: '#00b65e' }
               }}
             />
+
+            {!existeAdmin && (
+              <Box sx={{ mt: 2 }}>
+                <Alert severity="info" sx={{ mb: 2, fontSize: '0.85rem' }}>
+                  Configuração Inicial: Crie o primeiro Admin.
+                </Alert>
+                <FormControl fullWidth>
+                  <InputLabel sx={{ '&.Mui-focused': { color: '#00b65e' } }}>Tipo de Perfil</InputLabel>
+                  <Select
+                    value={tipoUsuarioId}
+                    label="Tipo de Perfil"
+                    onChange={(e) => setTipoUsuarioId(e.target.value)}
+                    sx={{ '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#00b65e' } }}
+                  >
+                    <MenuItem value={TIPO_USUARIO.SOLICITANTE}>Solicitante</MenuItem>
+                    <MenuItem value={TIPO_USUARIO.ADMINISTRADOR}>Administrador</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+            )}
             
             <Button
               type="submit"
@@ -132,7 +177,7 @@ export default function LoginPage() {
               variant="contained"
               size="large"
               sx={{ 
-                mt: 3, 
+                mt: 4, 
                 mb: 2, 
                 py: 1.5, 
                 bgcolor: '#00b65e', 
@@ -143,33 +188,24 @@ export default function LoginPage() {
               }}
               disabled={loading}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : 'ENTRAR'}
+              {loading ? <CircularProgress size={24} color="inherit" /> : 'CADASTRAR'}
             </Button>
             
             <Box sx={{ textAlign: 'center', mt: 2 }}>
               <Link 
                 component="button"
-                type="Button"
+                type="button"
                 variant="body2" 
-                onClick={() => router.push('/cadastro_usuario')}
+                onClick={() => router.push('/login')}
                 sx={{ textDecoration: 'none', color: '#00b65e', fontWeight: 600 }}
               >
-                Não tem uma conta? Cadastre-se
+                Já tem uma conta? Entre aqui
               </Link>
             </Box>
           </Box>
         </Paper>
         
-        <Box sx={{ mt: 4 }}>
-          <Typography variant="body2" align="center" sx={{ color: 'rgba(255,255,255,0.8)' }}>
-            {'Copyright © '}
-            <Link color="inherit" href="#" sx={{ fontWeight: 'bold' }}>
-              TechMind
-            </Link>{' '}
-            {new Date().getFullYear()}
-            {'.'}
-          </Typography>
-        </Box>
+        <Copyright />
       </Container>
     </Box>
   );
